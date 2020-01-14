@@ -7,13 +7,23 @@ public class CustomOption {
     List<CustomOptionList> option;
     String type;
     String maxselected;
-    String currentselected;
+    String currentOption;
 
-    public String getCurrentselected() {
+    public String getCurrentOption() {
+        return currentOption;
+    }
+
+    public void setCurrentOption(String currentOption) {
+        this.currentOption = currentOption;
+    }
+
+    public int currentselected;
+
+    public int getCurrentselected() {
         return currentselected;
     }
 
-    public void setCurrentselected(String currentselected) {
+    public void setCurrentselected(int currentselected) {
         this.currentselected = currentselected;
     }
 

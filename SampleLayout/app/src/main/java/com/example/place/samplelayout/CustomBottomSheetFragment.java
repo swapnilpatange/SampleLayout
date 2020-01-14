@@ -23,7 +23,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.CheckBox;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -34,8 +36,9 @@ import org.json.JSONObject;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
-public class CustomBottomSheetFragment extends BottomSheetDialogFragment {
+public class CustomBottomSheetFragment extends BottomSheetDialogFragment implements CheckBoxAdapter.Selectedlistener, CustomItemAdapter.SelectionChange {
     private BottomSheetBehavior.BottomSheetCallback mBottomSheetBehaviorCallback = new BottomSheetBehavior.BottomSheetCallback() {
 
         @Override
@@ -58,6 +61,7 @@ public class CustomBottomSheetFragment extends BottomSheetDialogFragment {
     private RecyclerView mainList;
     private TextView addButton;
     private List<CustomOption> customOptions;
+    private List<CustomSelected> customSelecteds;
     private String result = "{\n" +
             "\t\"customlist\": [{\n" +
             "\t\t\"title\": \"choose any 1\",\n" +
@@ -89,17 +93,38 @@ public class CustomBottomSheetFragment extends BottomSheetDialogFragment {
             "\t\t\"maxselected\": \"2\"\n" +
             "\t}]\n" +
             "}";
+    private FragmentListener fragmentListener;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         mainList = ratingBreakupView.findViewById(R.id.mainList);
-        addButton=ratingBreakupView.findViewById(R.id.addButton);
+        addButton = ratingBreakupView.findViewById(R.id.addButton);
+        customSelecteds = new ArrayList<>();
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (validate()){
+                if (validate()) {
+                    for (int i = 0; i < customOptions.size(); i++) {
 
+                        String content = "";
+                        CustomSelected customSelected = new CustomSelected();
+                        customSelected.setTitle(customOptions.get(i).getTitle());
+                        if (customOptions.get(i).getType().equalsIgnoreCase("1")) {
+                            customSelected.setContent(customOptions.get(i).getCurrentOption());
+                        } else if (customOptions.get(i).getType().equalsIgnoreCase("2")) {
+                            for (int j = 0; j < customOptions.get(i).getOption().size(); j++) {
+                                if (customOptions.get(i).getOption().get(j).getIsSelected().equalsIgnoreCase("1")) {
+                                    content = content + (j == 0 ? "" : ",") + customOptions.get(i).getOption().get(j).getName();
+                                }
+                            }
+                            customSelected.setTitle(customOptions.get(i).getTitle());
+                            customSelected.setContent(content);
+                        }
+                        customSelecteds.add(customSelected);
+                    }
+                    fragmentListener.setContent(customSelecteds);
+                    dismiss();
                 }
             }
         });
@@ -109,8 +134,8 @@ public class CustomBottomSheetFragment extends BottomSheetDialogFragment {
                 Gson gson = new Gson();
                 Type listType = new TypeToken<ArrayList<CustomOption>>() {
                 }.getType();
-                 customOptions = gson.fromJson(jsonObject.getJSONArray("customlist").toString(), listType);
-                CustomItemAdapter customItemAdapter = new CustomItemAdapter(getActivity(),customOptions);
+                customOptions = gson.fromJson(jsonObject.getJSONArray("customlist").toString(), listType);
+                CustomItemAdapter customItemAdapter = new CustomItemAdapter(getActivity(), customOptions, this);
                 mainList.setAdapter(customItemAdapter);
                 mainList.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
             }
@@ -123,9 +148,12 @@ public class CustomBottomSheetFragment extends BottomSheetDialogFragment {
     }
 
     private boolean validate() {
-        for(int i=0;i<customOptions.size();i++){
-            if (customOptions.get(i).getType().equalsIgnoreCase("2")){
-
+        for (int i = 0; i < customOptions.size(); i++) {
+            if (customOptions.get(i).getType().equalsIgnoreCase("2")) {
+                if (customOptions.get(i).currentselected < Integer.parseInt(customOptions.get(i).getMaxselected())) {
+                    Toast.makeText(getActivity(), "you must select " + customOptions.get(i).getMaxselected() + " items", Toast.LENGTH_LONG).show();
+                    return false;
+                }
             }
         }
         return true;
@@ -239,4 +267,32 @@ public class CustomBottomSheetFragment extends BottomSheetDialogFragment {
 
     }
 
+    @Override
+    public void onSelectionChanged(int listPosition, int optionPosition, String isSelected) {
+        customOptions.get(listPosition).getOption().get(optionPosition).setIsSelected(isSelected);
+    }
+
+    @Override
+    public void onIncrement(int listPosition) {
+        customOptions.get(listPosition).currentselected++;
+    }
+
+    @Override
+    public void ondecrement(int listPosition) {
+
+        customOptions.get(listPosition).currentselected--;
+    }
+
+    @Override
+    public void onSelectedChanged(int listPosition, String option) {
+        customOptions.get(listPosition).setCurrentOption(option);
+    }
+
+    public void setListener(FragmentListener fragmentListener) {
+        this.fragmentListener = fragmentListener;
+    }
+
+    public interface FragmentListener {
+        void setContent(List<CustomSelected> customSelecteds);
+    }
 }

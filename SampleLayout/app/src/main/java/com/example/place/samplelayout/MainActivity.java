@@ -5,7 +5,9 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity {
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity implements CustomBottomSheetFragment.FragmentListener {
 
     private TextView openDialog;
 
@@ -18,8 +20,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 CustomBottomSheetFragment customBottomSheetFragment = CustomBottomSheetFragment.newInstance();
+                customBottomSheetFragment.setListener(MainActivity.this);
                 customBottomSheetFragment.show(getSupportFragmentManager(), "custom");
             }
         });
+    }
+
+    @Override
+    public void setContent(List<CustomSelected> customSelecteds) {
+        String content = "";
+        for (int i = 0; i < customSelecteds.size(); i++) {
+            content = content + customSelecteds.get(i).getTitle() + ": " + customSelecteds.get(i).getContent() + "\n";
+        }
+        openDialog.setText(content);
     }
 }

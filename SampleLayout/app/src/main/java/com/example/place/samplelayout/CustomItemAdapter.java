@@ -14,12 +14,16 @@ import android.widget.TextView;
 import java.util.List;
 
 public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.CustomItemViewHolder> {
+    private CustomBottomSheetFragment customBottomSheetFragment;
     private List<CustomOption> customOptions;
     private Activity activity;
+    private SelectionChange selectionChange;
 
-    public CustomItemAdapter(Activity activity, List<CustomOption> customOptions) {
+    public CustomItemAdapter(Activity activity, List<CustomOption> customOptions, CustomBottomSheetFragment customBottomSheetFragment) {
         this.customOptions = customOptions;
         this.activity = activity;
+        this.selectionChange = customBottomSheetFragment;
+        this.customBottomSheetFragment = customBottomSheetFragment;
     }
 
     @NonNull
@@ -40,11 +44,21 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
                 radioButton.setText(customOptions.get(position).getOption().get(i).getName());
                 //radioButton.setId(1234);//set radiobutton id and store it somewhere
                 viewHolder.radioButtonList.addView(radioButton);
+                if (i == 0) {
+                    radioButton.setChecked(true);
+                    selectionChange.onSelectedChanged(position, customOptions.get(position).getOption().get(i).getName());
+                }
             }
             viewHolder.radioButtonList.setVisibility(View.VISIBLE);
+            viewHolder.radioButtonList.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(RadioGroup radioGroup, int i) {
+                    selectionChange.onSelectedChanged(position, ((RadioButton) radioGroup.findViewById(radioGroup.getCheckedRadioButtonId())).getText().toString());
+                }
+            });
             viewHolder.checkBoxList.setVisibility(View.GONE);
         } else {
-            CheckBoxAdapter checkBoxAdapter = new CheckBoxAdapter(activity,customOptions.get(position).getOption(),customOptions.get(position).getMaxselected());
+            CheckBoxAdapter checkBoxAdapter = new CheckBoxAdapter(activity, customOptions.get(position).getOption(), customOptions.get(position).getMaxselected(), customBottomSheetFragment, position);
             viewHolder.checkBoxList.setAdapter(checkBoxAdapter);
             viewHolder.checkBoxList.setLayoutManager(new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
 
@@ -70,5 +84,9 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
             radioButtonList = itemView.findViewById(R.id.radioButtonList);
             checkBoxList = itemView.findViewById(R.id.checkBoxList);
         }
+    }
+
+    public interface SelectionChange {
+        void onSelectedChanged(int listPosition, String optionPosition);
     }
 }

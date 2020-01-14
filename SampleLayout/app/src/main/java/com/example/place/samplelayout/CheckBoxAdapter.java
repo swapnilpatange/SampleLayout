@@ -15,16 +15,20 @@ import java.util.List;
 public class CheckBoxAdapter extends RecyclerView.Adapter<CheckBoxAdapter.CheckBoxViewHolder> {
 
 
+    private int listPosition;
+    private Selectedlistener selectedListener;
     private Activity activity;
     private String maxselected;
     List<CustomOptionList> customOptions;
     private int currentSelected = 0;
     private boolean onBind;
 
-    public CheckBoxAdapter(Activity activity, List<CustomOptionList> option, String maxselected) {
+    public CheckBoxAdapter(Activity activity, List<CustomOptionList> option, String maxselected, Selectedlistener selectedlistener, int listPosition) {
         this.customOptions = option;
         this.maxselected = maxselected;
         this.activity = activity;
+        this.selectedListener = selectedlistener;
+        this.listPosition = listPosition;
     }
 
     @NonNull
@@ -54,13 +58,18 @@ public class CheckBoxAdapter extends RecyclerView.Adapter<CheckBoxAdapter.CheckB
                         if (currentSelected < Integer.parseInt(maxselected)) {
                             currentSelected++;
                             customOptions.get(position).setIsSelected("1");
+                            selectedListener.onSelectionChanged(listPosition, position, "1");
+                            selectedListener.onIncrement(listPosition);
                         } else {
                             Toast.makeText(activity, "you can select maximum " + maxselected + " items", Toast.LENGTH_SHORT).show();
                             customOptions.get(position).setIsSelected("0");
+                            selectedListener.onSelectionChanged(listPosition, position, "0");
                         }
                     } else {
                         currentSelected--;
                         customOptions.get(position).setIsSelected("0");
+                        selectedListener.onSelectionChanged(listPosition, position, "0");
+                        selectedListener.ondecrement(listPosition);
                     }
                     notifyDataSetChanged();
                 }
@@ -81,6 +90,12 @@ public class CheckBoxAdapter extends RecyclerView.Adapter<CheckBoxAdapter.CheckB
             super(itemView);
             checkBox = itemView.findViewById(R.id.checkbox);
         }
+    }
+
+    public interface Selectedlistener {
+        void onSelectionChanged(int listPosition, int optionPosition, String isSelected);
+        void onIncrement(int listPosition);
+        void ondecrement(int listPosition);
     }
 
 }
